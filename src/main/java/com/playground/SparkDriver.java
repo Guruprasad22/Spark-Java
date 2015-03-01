@@ -31,7 +31,7 @@ public class SparkDriver {
 		}
 
 		
-		JavaRDD<String> text = context.textFile("/home//cloudera/bookmark.js");
+		JavaRDD<String> text = context.textFile(inputPath);
 		
 		// flatMap Return a new RDD by first applying a function to all elements of this RDD,
 		// and then flattening the results.
@@ -53,10 +53,6 @@ public class SparkDriver {
 		    }}).reduceByKey(new Function2<Integer, Integer, Integer>(){
 		        public Integer call(Integer x, Integer y){ return x + y;}});
 		// Save the word count back out to a text file, causing evaluation.
-		counts.saveAsTextFile("");
-		
-		
-		
-		
+		counts.saveAsTextFile(outputPath);		
 	}
 }
