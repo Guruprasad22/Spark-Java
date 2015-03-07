@@ -1,14 +1,12 @@
 package com.playground;
 
-import io.netty.util.internal.StringUtil;
-
 import java.io.Serializable;
 import java.util.Arrays;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 
 /**
@@ -30,9 +28,11 @@ public class Transformation implements Serializable{
 			keyword = args[1];
 		}
 		
-		new Transformation().filterAnExternalDataSource(path, keyword, sc);
+		//new Transformation().filterAnExternalDataSource(path, keyword, sc);
 		
-		new Transformation().squareMe(sc);
+		//new Transformation().squareMe(sc);
+		
+		new Transformation().doMapAndFlatMap(sc);
 		
 	}
 	/**
@@ -85,6 +85,34 @@ public class Transformation implements Serializable{
 		});
 		
 		System.out.println("the squared numbers are ." + StringUtils.join(squaredNumbers.collect(),","));
+	}
+	
+	public void doMapAndFlatMap(JavaSparkContext sc) {
+		
+		JavaRDD<String> sentence = sc.parallelize(Arrays.asList("This is the first line","yet another line"));
+		JavaRDD<String[]> words = sentence.map(new Function<String, String[]>() {
+
+			public String[] call(String str) throws Exception {
+				return str.split(" ");
+			}
+		});
+		
+		for(String[] str : words.toArray()) {
+			for(String s : str) {
+				System.out.println(s);
+			}
+		}
+		
+		JavaRDD<String> flatWords = sentence.flatMap(new FlatMapFunction<String, String>() {
+
+			public Iterable<String> call(String t) throws Exception {
+				return Arrays.asList(t.split(" "));
+			}			
+		});
+		
+		for(String s: flatWords.toArray()) {
+			System.out.println(s);
+		}
 	}
 	
 }
