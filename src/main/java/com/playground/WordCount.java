@@ -16,34 +16,35 @@ import scala.Tuple2;
 
 public class WordCount {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
-		SparkConf conf = new SparkConf();
-		conf.setAppName("Frst spark app");
-		conf.setMaster("local");
-		JavaSparkContext context = new JavaSparkContext(conf);
-		String inputPath ="",outputPath = "";
+		String inputPath = "";
+		String outputPath = "";
+		String tokenizer = "";
 		
-		if(args.length == 2) {
+		if(args.length != 3) {
+			System.out.println("You passes " + args.length + " arguments");
+			throw new Exception("Usage => spark-submit --class com.playground.WordCount spark-examples.jar <input-file-path> <output-path> <tokenizer>");
+		} else {
 			inputPath = args[0];
 			outputPath = args[1];
-		} else {
-			inputPath = "/home/cloudera/bookmark.js";
-			outputPath = "/home/cloudera/";
+			tokenizer = args[2];
 		}
-
 		
-		JavaRDD<String> text = context.textFile(inputPath);
+		SparkConf conf = new SparkConf();
+		conf.setAppName("word count example");
+		JavaSparkContext sc = new JavaSparkContext(conf); // this will be our handle
 		
-		// flatMap Return a new RDD by first applying a function to all elements of this RDD,
+		JavaRDD<String> text = sc.textFile(inputPath);
+		
+		// flatMap returns a new RDD by first applying a function to all elements of this RDD,
 		// and then flattening the results.
-		
+		final String tokenizerConstant = tokenizer;
 		JavaRDD<String> words = text.flatMap(
 				new FlatMapFunction<String,String> () {
-
 					public Iterable<String> call(String script) throws Exception {
 						// TODO Auto-generated method stub
-						return Arrays.asList(script.split(" "));
+						return Arrays.asList(script.split(tokenizerConstant));
 					}					
 				});
 		
@@ -51,10 +52,10 @@ public class WordCount {
 		JavaPairRDD<String, Integer> counts = words.mapToPair(
 		  new PairFunction<String, String, Integer>(){
 		    public Tuple2<String, Integer> call(String x){
-		      return new Tuple2(x, 1);
+		      return new Tuple2(x, 1); // creates a tuple for each word
 		    }}).reduceByKey(new Function2<Integer, Integer, Integer>(){
-		        public Integer call(Integer x, Integer y){ return x + y;}});
-		// Save the word count back out to a text file, causing evaluation.
+		        public Integer call(Integer x, Integer y){ return x + y;}}); // adds all tuple values for a given key
+		// Save the word count back out to a text file, causing evaluation of lineage graph.
 		counts.saveAsTextFile(outputPath);		
 	}
 }
